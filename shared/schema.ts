@@ -13,6 +13,7 @@ export const pessoas = pgTable("pessoas", {
   tipoPessoa: text("tipo_pessoa"),
   nacionalidade: text("nacionalidade"),
   telefone: text("telefone"),
+  comentario: text("comentario"),
 });
 
 export const insertPessoaSchema = createInsertSchema(pessoas)
@@ -26,6 +27,7 @@ export const insertPessoaSchema = createInsertSchema(pessoas)
     tipoPessoa: z.string().nullish(),
     nacionalidade: z.string().nullish(),
     telefone: z.string().nullish(),
+    comentario: z.string().nullish(),
   });
 
 export type InsertPessoa = z.infer<typeof insertPessoaSchema>;
