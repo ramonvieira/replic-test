@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { type Pessoa } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -61,6 +61,20 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
     return <div>Carregando...</div>;
   }
 
+  if (!pessoas?.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Users className="h-24 w-24 text-gray-300 mb-4" strokeWidth={1} />
+        <h3 className="text-lg font-medium text-gray-900 mb-1">
+          Nenhuma pessoa cadastrada
+        </h3>
+        <p className="text-sm text-gray-500">
+          Clique no botão "Nova Pessoa" para começar a cadastrar.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       <Table>
@@ -73,7 +87,7 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {pessoas?.map((pessoa) => (
+          {pessoas.map((pessoa) => (
             <TableRow key={pessoa.id}>
               <TableCell>{pessoa.nome}</TableCell>
               <TableCell>{pessoa.cpf}</TableCell>
