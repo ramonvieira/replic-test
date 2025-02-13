@@ -23,20 +23,13 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Pencil, Trash2, Users, ArrowUpDown, MessageSquare } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { type Pessoa } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { indexedDBService } from "@/lib/indexedDB";
 
@@ -61,26 +54,30 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
   const [comment, setComment] = useState("");
   const itemsPerPage = 20;
 
-  const { data: pessoas, isLoading } = useQuery<Pessoa[]>({
-    queryKey: ["/api/pessoas"],
-    onSuccess: async (data) => {
+  const { data: pessoas = [], isLoading, refetch } = useQuery<Pessoa[]>({
+    queryKey: ["pessoas"],
+    queryFn: async () => {
       try {
-        for (const pessoa of data) {
-          await indexedDBService.update(pessoa);
-        }
+        const data = await indexedDBService.getAll();
+        return data;
       } catch (error) {
-        console.error("Erro ao sincronizar com IndexedDB:", error);
+        console.error("Erro ao carregar dados:", error);
+        return [];
       }
-    },
+    }
   });
+
+  // Inicializa o IndexedDB quando o componente montar
+  useEffect(() => {
+    indexedDBService.init().catch(console.error);
+  }, []);
 
   const handleDelete = async () => {
     if (!deleteId) return;
 
     try {
-      await apiRequest("DELETE", `/api/pessoas/${deleteId}`);
       await indexedDBService.delete(deleteId);
-      queryClient.invalidateQueries({ queryKey: ["/api/pessoas"] });
+      queryClient.invalidateQueries({ queryKey: ["pessoas"] });
       toast({
         title: "Sucesso",
         description: "Cadastro excluído com sucesso.",
@@ -124,9 +121,15 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
   const handleAddComment = async () => {
     try {
       for (const id of selectedIds) {
-        await apiRequest("PUT", `/api/pessoas/${id}`, { comentario: comment });
+        const pessoa = await indexedDBService.get(id);
+        if (pessoa) {
+          await indexedDBService.update({
+            ...pessoa,
+            comentario: comment
+          });
+        }
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/pessoas"] });
+      queryClient.invalidateQueries({ queryKey: ["pessoas"] });
       setCommentModalOpen(false);
       setComment("");
       setSelectedIds(new Set());
@@ -144,8 +147,6 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
   };
 
   const filteredPessoas = useMemo(() => {
-    if (!pessoas) return [];
-
     return pessoas
       .filter(pessoa => 
         Object.values(pessoa)
@@ -156,8 +157,8 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
           )
       )
       .sort((a, b) => {
-        const aValue = String(a[sortConfig.column]);
-        const bValue = String(b[sortConfig.column]);
+        const aValue = String(a[sortConfig.column] || '');
+        const bValue = String(b[sortConfig.column] || '');
         return sortConfig.direction === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);

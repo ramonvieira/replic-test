@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { insertPessoaSchema, type InsertPessoa, type Pessoa, estadosCivis, sexos, tiposPessoa } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
 import { PAISES } from "@/lib/constants";
 import { formatCPF, validateCPF } from "@/lib/cpf";
 import { useToast } from "@/hooks/use-toast";
@@ -55,23 +54,26 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
 
   const onSubmit = async (data: InsertPessoa) => {
     try {
-      let savedPessoa: Pessoa;
       if (pessoa) {
-        const response = await apiRequest("PUT", `/api/pessoas/${pessoa.id}`, data);
-        savedPessoa = await response.json();
-        await indexedDBService.update(savedPessoa);
+        await indexedDBService.update({ ...data, id: pessoa.id });
       } else {
-        const response = await apiRequest("POST", "/api/pessoas", data);
-        savedPessoa = await response.json();
+        const savedPessoa: Pessoa = {
+          ...data,
+          id: Date.now(), // Usando timestamp como ID temporário
+          dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
+          comentario: null
+        };
         await indexedDBService.add(savedPessoa);
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/pessoas"] });
+
+      queryClient.invalidateQueries({ queryKey: ["pessoas"] });
       toast({
         title: pessoa ? "Cadastro atualizado" : "Cadastro realizado",
         description: "Os dados foram salvos com sucesso.",
       });
       onSuccess();
     } catch (error) {
+      console.error("Erro ao salvar:", error);
       toast({
         title: "Erro",
         description: "Ocorreu um erro ao salvar os dados.",

@@ -23,14 +23,16 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Cadastro de Pessoas</h1>
-        <Button onClick={() => setOpen(true)}>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          Cadastro de Pessoas
+        </h1>
+        <Button onClick={() => setOpen(true)} className="bg-primary hover:bg-primary/90">
           <Plus className="mr-2 h-4 w-4" />
           Nova Pessoa
         </Button>
       </div>
 
-      <Dialog open={open} onOpenChange={handleClose} modal>
+      <Dialog open={open} onOpenChange={handleClose} modal closeOnOutsideClick={false}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
