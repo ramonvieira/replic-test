@@ -56,6 +56,19 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
 
   const onSubmit = async (data: InsertPessoa) => {
     try {
+      // Verificar se já existe uma pessoa com o mesmo CPF
+      const pessoas = await indexedDBService.getAll();
+      const existingPessoa = pessoas.find(p => p.cpf === data.cpf && p.id !== pessoa?.id);
+
+      if (existingPessoa) {
+        toast({
+          title: "CPF já cadastrado",
+          description: "Já existe uma pessoa cadastrada com este CPF.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const pessoaData: Pessoa = {
         id: pessoa?.id || Date.now(),
         nome: data.nome,
