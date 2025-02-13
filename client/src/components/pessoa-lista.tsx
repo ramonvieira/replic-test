@@ -120,7 +120,8 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
 
   const handleAddComment = async () => {
     try {
-      for (const id of selectedIds) {
+      const selectedArray = Array.from(selectedIds);
+      for (const id of selectedArray) {
         const pessoa = await indexedDBService.get(id);
         if (pessoa) {
           await indexedDBService.update({
@@ -209,106 +210,108 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
           )}
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[40px]">
-                <Checkbox
-                  checked={selectedIds.size === paginatedPessoas.length}
-                  onCheckedChange={handleSelectAll}
-                />
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('nome')}
-                  className="flex items-center"
-                >
-                  Nome
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('cpf')}
-                  className="flex items-center"
-                >
-                  CPF
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort('telefone')}
-                  className="flex items-center"
-                >
-                  Telefone
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedPessoas.map((pessoa) => (
-              <ContextMenu key={pessoa.id}>
-                <ContextMenuTrigger>
-                  <TableRow
-                    onDoubleClick={() => onEdit(pessoa)}
-                    className="cursor-pointer hover:bg-gray-50"
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px] text-center">
+                  <Checkbox
+                    checked={selectedIds.size === paginatedPessoas.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
+                <TableHead className="w-[300px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('nome')}
+                    className="flex items-center hover:text-primary"
                   >
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedIds.has(pessoa.id)}
-                        onCheckedChange={(checked) => handleSelectOne(pessoa.id, !!checked)}
-                      />
-                    </TableCell>
-                    <TableCell>{pessoa.nome}</TableCell>
-                    <TableCell>{pessoa.cpf}</TableCell>
-                    <TableCell>{pessoa.telefone}</TableCell>
-                    <TableCell className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEdit(pessoa)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(pessoa.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      {pessoa.comentario && (
+                    Nome
+                    <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.column === 'nome' ? 'text-primary' : ''}`} />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[150px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('cpf')}
+                    className="flex items-center hover:text-primary"
+                  >
+                    CPF
+                    <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.column === 'cpf' ? 'text-primary' : ''}`} />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[150px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('telefone')}
+                    className="flex items-center hover:text-primary"
+                  >
+                    Telefone
+                    <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.column === 'telefone' ? 'text-primary' : ''}`} />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[120px] text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedPessoas.map((pessoa) => (
+                <ContextMenu key={pessoa.id}>
+                  <ContextMenuTrigger asChild>
+                    <TableRow
+                      onDoubleClick={() => onEdit(pessoa)}
+                      className="cursor-pointer hover:bg-gray-50"
+                    >
+                      <TableCell className="text-center">
+                        <Checkbox
+                          checked={selectedIds.has(pessoa.id)}
+                          onCheckedChange={(checked) => handleSelectOne(pessoa.id, !!checked)}
+                        />
+                      </TableCell>
+                      <TableCell>{pessoa.nome}</TableCell>
+                      <TableCell>{pessoa.cpf}</TableCell>
+                      <TableCell>{pessoa.telefone}</TableCell>
+                      <TableCell className="text-right space-x-2">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => onEdit(pessoa)}
                         >
-                          <MessageSquare className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                  <ContextMenuItem onClick={() => onEdit(pessoa)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => setDeleteId(pessoa.id)}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Excluir
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
-            ))}
-          </TableBody>
-        </Table>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(pessoa.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                        {pessoa.comentario && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onEdit(pessoa)}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onClick={() => onEdit(pessoa)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </ContextMenuItem>
+                    <ContextMenuItem onClick={() => setDeleteId(pessoa.id)}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
         <div className="flex justify-center gap-2 mt-4">
           <Button

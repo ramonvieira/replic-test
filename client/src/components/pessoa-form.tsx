@@ -39,6 +39,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
       tipoPessoa: pessoa.tipoPessoa || "Física",
       nacionalidade: pessoa.nacionalidade || "Brasil",
       telefone: pessoa.telefone || "",
+      comentario: pessoa.comentario || "",
     } : {
       nome: "",
       cpf: "",
@@ -49,21 +50,30 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
       tipoPessoa: "Física",
       nacionalidade: "Brasil",
       telefone: "",
+      comentario: "",
     },
   });
 
   const onSubmit = async (data: InsertPessoa) => {
     try {
+      const pessoaData: Pessoa = {
+        id: pessoa?.id || Date.now(),
+        nome: data.nome,
+        cpf: data.cpf,
+        site: data.site || null,
+        dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
+        estadoCivil: data.estadoCivil || null,
+        sexo: data.sexo || null,
+        tipoPessoa: data.tipoPessoa || null,
+        nacionalidade: data.nacionalidade || null,
+        telefone: data.telefone || null,
+        comentario: data.comentario || null,
+      };
+
       if (pessoa) {
-        await indexedDBService.update({ ...data, id: pessoa.id });
+        await indexedDBService.update(pessoaData);
       } else {
-        const savedPessoa: Pessoa = {
-          ...data,
-          id: Date.now(), // Usando timestamp como ID temporário
-          dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
-          comentario: null
-        };
-        await indexedDBService.add(savedPessoa);
+        await indexedDBService.add(pessoaData);
       }
 
       queryClient.invalidateQueries({ queryKey: ["pessoas"] });
