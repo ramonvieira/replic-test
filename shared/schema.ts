@@ -19,6 +19,13 @@ export const insertPessoaSchema = createInsertSchema(pessoas)
   .omit({ id: true })
   .extend({
     cpf: z.string().min(11).max(14),
+    site: z.string().nullish(),
+    dataNascimento: z.string().nullish(),
+    estadoCivil: z.string().nullish(),
+    sexo: z.string().nullish(),
+    tipoPessoa: z.string().nullish(),
+    nacionalidade: z.string().nullish(),
+    telefone: z.string().nullish(),
   });
 
 export type InsertPessoa = z.infer<typeof insertPessoaSchema>;

@@ -23,6 +23,7 @@ import { useState } from "react";
 import { type Pessoa } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { indexedDBService } from "@/lib/indexedDB";
 
 interface PessoaListaProps {
   onEdit: (pessoa: Pessoa) => void;
@@ -35,6 +36,16 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
 
   const { data: pessoas, isLoading } = useQuery<Pessoa[]>({
     queryKey: ["/api/pessoas"],
+    onSuccess: async (data) => {
+      // Sincroniza os dados do servidor com o IndexedDB
+      try {
+        for (const pessoa of data) {
+          await indexedDBService.update(pessoa);
+        }
+      } catch (error) {
+        console.error("Erro ao sincronizar com IndexedDB:", error);
+      }
+    },
   });
 
   const handleDelete = async () => {
@@ -42,6 +53,7 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
 
     try {
       await apiRequest("DELETE", `/api/pessoas/${deleteId}`);
+      await indexedDBService.delete(deleteId);
       queryClient.invalidateQueries({ queryKey: ["/api/pessoas"] });
       toast({
         title: "Sucesso",
@@ -88,7 +100,11 @@ export default function PessoaLista({ onEdit }: PessoaListaProps) {
         </TableHeader>
         <TableBody>
           {pessoas.map((pessoa) => (
-            <TableRow key={pessoa.id}>
+            <TableRow
+              key={pessoa.id}
+              onDoubleClick={() => onEdit(pessoa)}
+              className="cursor-pointer hover:bg-gray-50"
+            >
               <TableCell>{pessoa.nome}</TableCell>
               <TableCell>{pessoa.cpf}</TableCell>
               <TableCell>{pessoa.telefone}</TableCell>

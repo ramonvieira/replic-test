@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { PAISES } from "@/lib/constants";
 import { formatCPF, validateCPF } from "@/lib/cpf";
 import { useToast } from "@/hooks/use-toast";
+import { indexedDBService } from "@/lib/indexedDB";
 
 const schema = insertPessoaSchema.extend({
   cpf: insertPessoaSchema.shape.cpf.refine(
@@ -26,16 +27,26 @@ interface PessoaFormProps {
 export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const form = useForm<InsertPessoa>({
     resolver: zodResolver(schema),
-    defaultValues: pessoa || {
+    defaultValues: pessoa ? {
+      nome: pessoa.nome,
+      cpf: pessoa.cpf,
+      site: pessoa.site || "",
+      dataNascimento: pessoa.dataNascimento?.toString() || "",
+      estadoCivil: pessoa.estadoCivil || "",
+      sexo: pessoa.sexo || "",
+      tipoPessoa: pessoa.tipoPessoa || "Física",
+      nacionalidade: pessoa.nacionalidade || "Brasil",
+      telefone: pessoa.telefone || "",
+    } : {
       nome: "",
       cpf: "",
       site: "",
-      dataNascimento: undefined,
-      estadoCivil: undefined,
-      sexo: undefined,
+      dataNascimento: "",
+      estadoCivil: "",
+      sexo: "",
       tipoPessoa: "Física",
       nacionalidade: "Brasil",
       telefone: "",
@@ -44,10 +55,15 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
 
   const onSubmit = async (data: InsertPessoa) => {
     try {
+      let savedPessoa: Pessoa;
       if (pessoa) {
-        await apiRequest("PUT", `/api/pessoas/${pessoa.id}`, data);
+        const response = await apiRequest("PUT", `/api/pessoas/${pessoa.id}`, data);
+        savedPessoa = await response.json();
+        await indexedDBService.update(savedPessoa);
       } else {
-        await apiRequest("POST", "/api/pessoas", data);
+        const response = await apiRequest("POST", "/api/pessoas", data);
+        savedPessoa = await response.json();
+        await indexedDBService.add(savedPessoa);
       }
       queryClient.invalidateQueries({ queryKey: ["/api/pessoas"] });
       toast({
@@ -74,7 +90,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
             <FormItem>
               <FormLabel>Nome *</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={field.value || ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -90,6 +106,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
               <FormControl>
                 <Input
                   {...field}
+                  value={field.value || ""}
                   onChange={(e) => {
                     const formatted = formatCPF(e.target.value);
                     field.onChange(formatted);
@@ -110,7 +127,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
               <FormItem>
                 <FormLabel>Telefone</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -124,7 +141,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
               <FormItem>
                 <FormLabel>Site</FormLabel>
                 <FormControl>
-                  <Input {...field} type="url" />
+                  <Input {...field} type="url" value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -140,7 +157,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
               <FormItem>
                 <FormLabel>Data de Nascimento</FormLabel>
                 <FormControl>
-                  <Input {...field} type="date" />
+                  <Input {...field} type="date" value={field.value || ""} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -153,7 +170,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Estado Civil</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value || ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -180,7 +197,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Sexo</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value || ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
@@ -205,7 +222,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo de Pessoa</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value || ""} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue />
@@ -231,7 +248,7 @@ export default function PessoaForm({ pessoa, onSuccess }: PessoaFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Nacionalidade</FormLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value || ""} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue />
