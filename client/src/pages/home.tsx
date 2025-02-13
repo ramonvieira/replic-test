@@ -32,8 +32,8 @@ export default function Home() {
         </Button>
       </div>
 
-      <Dialog open={open} onOpenChange={handleClose} modal closeOnOutsideClick={false}>
-        <DialogContent className="sm:max-w-[600px]">
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {editingPessoa ? (
@@ -48,10 +48,12 @@ export default function Home() {
               )}
             </DialogTitle>
           </DialogHeader>
-          <PessoaForm
-            pessoa={editingPessoa}
-            onSuccess={handleClose}
-          />
+          <div className="flex-1 overflow-hidden">
+            <PessoaForm
+              pessoa={editingPessoa}
+              onSuccess={handleClose}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
